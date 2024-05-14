@@ -1,0 +1,19 @@
+package com.yupi.example.common.model;
+
+import java.io.Serializable;
+
+/**
+ * @author 杨帆
+ */
+public class User implements Serializable {
+
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
