@@ -31,6 +31,11 @@ public class EtcdRegistry implements Registry{
     private final Set<String> localRegisterNodeKeySet = new HashSet<>();
 
     /**
+     * 注册中心服务缓存
+     */
+    private final RegistryServiceCache registryServiceCache = new RegistryServiceCache();
+
+    /**
      * 根节点
      */
     private final static String ETCD_ROOT_PATH = "/rpc/";
@@ -79,6 +84,13 @@ public class EtcdRegistry implements Registry{
      */
     @Override
     public List<ServiceMetaInfo> serviceDiscovery(String serviceKey) {
+        // 优先从缓存获取服务
+        List<ServiceMetaInfo> cachedServiceMetaInfoList = registryServiceCache.readCache();
+        if(cachedServiceMetaInfoList != null){
+            return cachedServiceMetaInfoList;
+        }
+
+
         // 前缀搜索，结尾一定要加"/"
         String searchPrefix = ETCD_ROOT_PATH + serviceKey + "/";
 
@@ -91,12 +103,17 @@ public class EtcdRegistry implements Registry{
                     .get()
                     .getKvs();
             // 解析服务信息
-            return keyValues.stream()
+            List<ServiceMetaInfo> serviceMetaInfoList = keyValues.stream()
                     .map(keyValue -> {
-                       String value = keyValue.getValue().toString(StandardCharsets.UTF_8);
-                       return JSONUtil.toBean(value, ServiceMetaInfo.class);
+                        String value = keyValue.getValue().toString(StandardCharsets.UTF_8);
+                        return JSONUtil.toBean(value, ServiceMetaInfo.class);
                     })
                     .collect(Collectors.toList());
+
+            // 写入服务缓存
+            registryServiceCache.writeCache(serviceMetaInfoList);
+            return serviceMetaInfoList;
+
         } catch (Exception e) {
             throw new RuntimeException("获取服务列表失败",e);
         }
