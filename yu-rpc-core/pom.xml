@@ -72,6 +72,12 @@
       <artifactId>jetcd-core</artifactId>
       <version>0.7.7</version>
     </dependency>
+<!--    &lt;!&ndash; zookeeper &ndash;&gt;-->
+<!--    <dependency>-->
+<!--      <groupId>org.apache.curator</groupId>-->
+<!--      <artifactId>curator-x-discovery-server</artifactId>-->
+<!--      <version>5.5.0</version>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

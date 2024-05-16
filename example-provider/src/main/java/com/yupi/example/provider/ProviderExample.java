@@ -8,8 +8,7 @@ import com.yupi.yurpc.model.ServiceMetaInfo;
 import com.yupi.yurpc.registry.LocalRegistry;
 import com.yupi.yurpc.registry.Registry;
 import com.yupi.yurpc.registry.RegistryFactory;
-import com.yupi.yurpc.server.HttpServer;
-import com.yupi.yurpc.server.VertxHttpServer;
+import com.yupi.yurpc.server.tcp.VertxTcpServer;
 
 /**
  * 简易服务提供者示例
@@ -39,8 +38,10 @@ public class ProviderExample {
         }
 
         // 启动web服务
-        HttpServer httpServer = new VertxHttpServer();
-        httpServer.doStart(RpcApplication.getRpcConfig().getServerPort());
+//        HttpServer httpServer = new VertxHttpServer();
+//        httpServer.doStart(RpcApplication.getRpcConfig().getServerPort());
+        VertxTcpServer vertxTcpServer = new VertxTcpServer();
+        vertxTcpServer.doStart(RpcApplication.getRpcConfig().getServerPort());
     }
 
 

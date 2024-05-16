@@ -93,7 +93,7 @@ public class EtcdRegistry implements Registry{
     @Override
     public List<ServiceMetaInfo> serviceDiscovery(String serviceKey) {
         // 优先从缓存获取服务
-        List<ServiceMetaInfo> cachedServiceMetaInfoList = registryServiceCache.readCache();
+        List<ServiceMetaInfo>  cachedServiceMetaInfoList = registryServiceCache.readCache();
         if(cachedServiceMetaInfoList != null){
             return cachedServiceMetaInfoList;
         }

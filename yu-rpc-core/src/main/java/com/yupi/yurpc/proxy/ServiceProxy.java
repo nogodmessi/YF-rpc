@@ -1,8 +1,6 @@
 package com.yupi.yurpc.proxy;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
 import com.yupi.RpcApplication;
 import com.yupi.yurpc.config.RpcConfig;
 import com.yupi.yurpc.constant.RpcConstant;
@@ -13,8 +11,8 @@ import com.yupi.yurpc.registry.Registry;
 import com.yupi.yurpc.registry.RegistryFactory;
 import com.yupi.yurpc.serializer.Serializer;
 import com.yupi.yurpc.serializer.SerializerFactory;
+import com.yupi.yurpc.server.tcp.VertxTcpClient;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -56,10 +54,7 @@ public class ServiceProxy implements InvocationHandler {
                 .parameterTypes(method.getParameterTypes())
                 .args(args)
                 .build();
-        try{
-            // 序列化
-            byte[] bodyBytes = serializer.serialize(rpcRequest);
-
+        try {
             // 从注册中心获取服务提供者请求地址
             RpcConfig rpcConfig = RpcApplication.getRpcConfig();
             Registry registry = RegistryFactory.getInstance(rpcConfig.getRegistryConfig().getRegistry());
@@ -67,25 +62,15 @@ public class ServiceProxy implements InvocationHandler {
             serviceMetaInfo.setServiceName(serviceName);
             serviceMetaInfo.setServiceVersion(RpcConstant.DEFAULT_SERVICE_VERSION);
             List<ServiceMetaInfo> serviceMetaInfoList = registry.serviceDiscovery(serviceMetaInfo.getServiceKey());
-            if(CollUtil.isEmpty(serviceMetaInfoList)){
+            if (CollUtil.isEmpty(serviceMetaInfoList)){
                 throw new RuntimeException("暂无服务地址");
             }
-            // 暂时先取第一个
             ServiceMetaInfo selectedServiceMetaInfo = serviceMetaInfoList.get(0);
-
-            // 发送请求
-            try(HttpResponse httpResponse = HttpRequest.post(selectedServiceMetaInfo.getServiceAddress())
-                    .body(bodyBytes)
-                    .execute()){
-                byte[] result = httpResponse.bodyBytes();
-                // 反序列化
-                RpcResponse rpcResponse = serializer.deserialize(result, RpcResponse.class);
-                return rpcResponse.getData();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+            // 发送TCP 请求
+            RpcResponse rpcResponse = VertxTcpClient.doRequest(rpcRequest, selectedServiceMetaInfo);
+            return rpcResponse.getData();
+        }catch (Exception e){
+            throw new RuntimeException("调用失败");
         }
-
-        return null;
     }
 }
