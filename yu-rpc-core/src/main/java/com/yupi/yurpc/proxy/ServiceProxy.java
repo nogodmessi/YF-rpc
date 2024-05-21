@@ -6,6 +6,8 @@ import com.yupi.yurpc.config.RpcConfig;
 import com.yupi.yurpc.constant.RpcConstant;
 import com.yupi.yurpc.fault.retry.RetryStrategy;
 import com.yupi.yurpc.fault.retry.RetryStrategyFactory;
+import com.yupi.yurpc.fault.tolerant.TolerantStrategy;
+import com.yupi.yurpc.fault.tolerant.TolerantStrategyFactory;
 import com.yupi.yurpc.loadbalancer.LoadBalancer;
 import com.yupi.yurpc.loadbalancer.LoadBalancerFactory;
 import com.yupi.yurpc.model.RpcRequest;
@@ -79,9 +81,19 @@ public class ServiceProxy implements InvocationHandler {
             requestParams.put("methodName", method.getName());
             ServiceMetaInfo selectedServiceMetaInfo = loadBalancer.select(requestParams, serviceMetaInfoList);
 
-            RetryStrategy retryStrategy = RetryStrategyFactory.getInstance(rpcConfig.getRetryStrategy());
-            RpcResponse rpcResponse = retryStrategy.doRetry(() ->
-                    VertxTcpClient.doRequest(rpcRequest, selectedServiceMetaInfo));
+            // rpc 请求
+            // 使用重试机制
+            RpcResponse rpcResponse;
+            try {
+                RetryStrategy retryStrategy = RetryStrategyFactory.getInstance(rpcConfig.getRetryStrategy());
+                rpcResponse = retryStrategy.doRetry(() ->
+                        VertxTcpClient.doRequest(rpcRequest, selectedServiceMetaInfo)
+                );
+            }catch (Exception e){
+                // 容错机制 (目前实现的较为简单)
+                TolerantStrategy tolerantStrategy = TolerantStrategyFactory.getInstance(rpcConfig.getTolerantStrategy());
+                rpcResponse = tolerantStrategy.doTolerant(null, e);
+            }
             return rpcResponse.getData();
         }catch (Exception e){
             throw new RuntimeException("调用失败");
