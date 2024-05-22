@@ -8,6 +8,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="yu-rpc-core" />
+        <module name="yu-rpc-spring-boot-starter" />
         <module name="yu-rpc-easy" />
         <module name="example-provider" />
         <module name="example-common" />
